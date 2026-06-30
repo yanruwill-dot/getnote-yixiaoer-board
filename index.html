@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>得到大脑知识库看表</title>
+    <style>
+      :root {
+        --orange: #ff7a1a;
+        --orange-strong: #e85f00;
+        --ink: #171717;
+        --muted: #6b7280;
+        --line: #e8e2da;
+        --paper: #fffaf5;
+        --glass: rgba(255, 255, 255, 0.72);
+        --ok: #17833b;
+        --warn: #b45309;
+        --bad: #b91c1c;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(255, 122, 26, 0.18), transparent 30%),
+          linear-gradient(180deg, #fffaf5 0%, #f7f7f5 48%, #f3f4f6 100%);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        letter-spacing: 0;
+      }
+
+      button, input, select, textarea { font: inherit; }
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        color: #fff;
+        background: var(--orange);
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(255, 122, 26, 0.22);
+      }
+      button.secondary {
+        color: var(--ink);
+        background: rgba(255,255,255,0.7);
+        border: 1px solid var(--line);
+        box-shadow: none;
+      }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .shell {
+        width: min(1380px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 22px 0 36px;
+      }
+      .topbar {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 16px;
+        background: var(--glass);
+        border: 1px solid rgba(255,255,255,0.84);
+        border-radius: 22px;
+        backdrop-filter: blur(24px) saturate(1.25);
+        box-shadow: 0 20px 50px rgba(42, 31, 20, 0.08);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 280px; }
+      .mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+        background: linear-gradient(145deg, #ff9f45, #ff6b00);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+      }
+      h1 { margin: 0; font-size: 18px; line-height: 1.2; }
+      .sub { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.62);
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--bad); }
+      .dot.ok { background: var(--ok); }
+      .dot.warn { background: var(--warn); }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 310px minmax(0, 1fr) 350px;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .panel {
+        background: rgba(255,255,255,0.76);
+        border: 1px solid rgba(232, 226, 218, 0.92);
+        border-radius: 22px;
+        box-shadow: 0 16px 42px rgba(42, 31, 20, 0.06);
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 14px 10px;
+      }
+      .panel-title { font-size: 14px; font-weight: 800; }
+      .panel-body { padding: 0 14px 14px; }
+      .field { display: grid; gap: 6px; margin: 10px 0; }
+      .field label { color: var(--muted); font-size: 12px; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.86);
+        padding: 10px 11px;
+        outline: none;
+      }
+      textarea { min-height: 126px; resize: vertical; line-height: 1.55; }
+      input:focus, select:focus, textarea:focus {
+        border-color: rgba(255, 122, 26, 0.72);
+        box-shadow: 0 0 0 4px rgba(255, 122, 26, 0.12);
+      }
+      .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+      .metric {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+      }
+      .metric b { display: block; font-size: 20px; line-height: 1.1; }
+      .metric span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+
+      .tabs { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+      .tab {
+        padding: 7px 11px;
+        border-radius: 999px;
+        color: var(--muted);
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+      .tab.active { color: #fff; background: var(--orange); }
+
+      .table-wrap { overflow: auto; max-height: calc(100vh - 182px); }
+      table { width: 100%; border-collapse: collapse; min-width: 860px; }
+      th, td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: rgba(255,250,245,0.94);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        backdrop-filter: blur(16px);
+      }
+      td { font-size: 13px; line-height: 1.45; }
+      tr { cursor: pointer; }
+      tr:hover td { background: rgba(255, 122, 26, 0.05); }
+      tr.selected td { background: rgba(255, 122, 26, 0.12); }
+      .title-cell { font-weight: 800; color: #111827; }
+      .muted { color: var(--muted); }
+      .tag {
+        display: inline-block;
+        margin: 0 4px 4px 0;
+        padding: 4px 7px;
+        border-radius: 999px;
+        color: #9a4a00;
+        background: #fff2e5;
+        font-size: 11px;
+      }
+      .empty {
+        display: grid;
+        place-items: center;
+        min-height: 360px;
+        color: var(--muted);
+        text-align: center;
+        padding: 42px;
+      }
+      .empty b { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
+      .preview {
+        max-height: 240px;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+        color: #2b2b2b;
+        font-size: 13px;
+        line-height: 1.65;
+        white-space: pre-wrap;
+      }
+      .log {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 16px;
+        background: #1f2937;
+        color: #f9fafb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        max-height: 180px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
+      .rewrite-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 9px;
+        margin: 10px 0 12px;
+      }
+      .rewrite-actions button {
+        width: 100%;
+        text-align: center;
+      }
+      .footer-note {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 1160px) {
+        .grid { grid-template-columns: 1fr; }
+        .table-wrap { max-height: none; }
+      }
+      @media (max-width: 720px) {
+        .shell { width: min(100% - 18px, 1380px); padding-top: 10px; }
+        .topbar { align-items: flex-start; flex-direction: column; border-radius: 18px; }
+        .brand { min-width: 0; }
+        .actions { justify-content: flex-start; }
+        table { min-width: 760px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">G</div>
+          <div>
+            <h1>得到大脑知识库看表</h1>
+            <div class="sub">Get 笔记 -> 知识库表格 -> 蚁小二草稿箱</div>
+          </div>
+        </div>
+        <div class="actions">
+          <span class="pill"><i id="getnoteDot" class="dot"></i><span id="getnoteStatus">GetNote 检查中</span></span>
+          <span class="pill"><i id="yxeDot" class="dot"></i><span id="yxeStatus">蚁小二检查中</span></span>
+          <button class="secondary" id="refreshBtn">刷新</button>
+          <button id="loadBtn">拉取看表</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <aside class="panel">
+          <div class="panel-head"><div class="panel-title">连接</div></div>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric"><b id="kbCount">0</b><span>知识库</span></div>
+              <div class="metric"><b id="noteCount">0</b><span>笔记</span></div>
+              <div class="metric"><b id="accountCount">0</b><span>账号</span></div>
+            </div>
+            <div class="field">
+              <label>知识库</label>
+              <select id="kbSelect"><option value="">全部最近笔记</option></select>
+            </div>
+            <div class="field">
+              <label>搜索/筛选</label>
+              <input id="search" placeholder="标题、正文、标签" />
+            </div>
+            <p class="footer-note">已自动读取本机 Note 配置和蚁小二配置。前台不展示授权信息，只保留看表、筛选、改写动作。</p>
+          </div>
+        </aside>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">简洁看表</div>
+            <div class="tabs">
+              <button class="tab active" data-mode="notes">笔记</button>
+              <button class="tab" data-mode="knowledge">知识库</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+            <div id="empty" class="empty">
+              <div><b>先拉取数据</b>会显示最近笔记或指定知识库里的笔记。</div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-head"><div class="panel-title">内容改写</div></div>
+          <div class="panel-body">
+            <div class="field">
+              <label>选中笔记</label>
+              <input id="selectedTitle" readonly placeholder="从表格里选一条笔记" />
+            </div>
+            <div class="field">
+              <label>原文预览</label>
+              <div class="preview" id="notePreview">还没有选择笔记。</div>
+            </div>
+            <div class="rewrite-actions">
+              <button id="rewriteWechatBtn" disabled>改写成公众号</button>
+              <button id="rewriteXhsBtn" class="secondary" disabled>改写成小红书</button>
+              <button id="rewriteSpeechBtn" class="secondary" disabled>改成口播文案</button>
+            </div>
+            <div class="field">
+              <label>改写结果</label>
+              <textarea id="rewriteOutput" placeholder="选择一条笔记后，点击上面的改写按钮。" spellcheck="false"></textarea>
+            </div>
+            <div class="log" id="log">等待选择笔记。</div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const state = {
+        mode: "notes",
+        knowledge: [],
+        notes: [],
+        accounts: [],
+        selected: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const log = (value) => {
+        $("log").textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      };
+      const clip = (text, n = 80) => String(text || "").replace(/\s+/g, " ").trim().slice(0, n);
+      const tags = (items) => (items || []).map((t) => `<span class="tag">${escapeHtml(t.name || t)}</span>`).join("");
+      const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m]));
+      const apiBase = (() => {
+        const configured = new URLSearchParams(location.search).get("api");
+        if (configured) return configured.replace(/\/$/, "");
+        return location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "" : "http://127.0.0.1:8796";
+      })();
+
+      async function api(path, options = {}) {
+        const resp = await fetch(`${apiBase}${path}`, {
+          ...options,
+          headers: { ...(options.headers || {}), ...(options.body ? { "content-type": "application/json" } : {}) }
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.ok === false) throw data;
+        return data;
+      }
+
+      function setDot(dotId, textId, ok, text, warn = false) {
+        $(dotId).className = `dot ${ok ? "ok" : warn ? "warn" : ""}`;
+        $(textId).textContent = text;
+      }
+
+      async function loadStatus() {
+        const status = await api("/api/status");
+        setDot("getnoteDot", "getnoteStatus", status.getnote.configured, status.getnote.configured ? "GetNote 已配置" : "GetNote 未配置", !status.getnote.configured);
+        setDot("yxeDot", "yxeStatus", status.yixiaoer.configured && status.yixiaoer.scriptExists, status.yixiaoer.configured ? "蚁小二已配置" : "蚁小二未配置", !status.yixiaoer.configured);
+        return status;
+      }
+
+      async function loadKnowledge() {
+        const data = await api("/api/getnote/knowledge");
+        state.knowledge = data.data.topics || data.data.data?.topics || [];
+        $("kbCount").textContent = state.knowledge.length;
+        $("kbSelect").innerHTML = `<option value="">全部最近笔记</option>` + state.knowledge.map((k) => `<option value="${escapeHtml(k.topic_id)}">${escapeHtml(k.name)} (${k.stats?.note_count || 0})</option>`).join("");
+      }
+
+      async function loadNotes() {
+        const topicId = $("kbSelect").value;
+        const data = topicId ? await api(`/api/getnote/knowledge/${encodeURIComponent(topicId)}/notes?page=1`) : await api("/api/getnote/notes");
+        state.notes = data.data.notes || data.data.data?.notes || [];
+        $("noteCount").textContent = state.notes.length;
+        state.mode = "notes";
+        render();
+      }
+
+      async function loadAll() {
+        try {
+          log("正在拉取 GetNote 数据...");
+          await loadKnowledge();
+          await loadNotes();
+          log("GetNote 数据已拉取。");
+        } catch (error) {
+          log(error);
+          render();
+        }
+      }
+
+      async function loadAccounts() {
+        try {
+          log("正在刷新蚁小二账号...");
+          const result = await api("/api/yixiaoer/accounts");
+          const parsed = result.parsed || {};
+          state.accounts = parsed.data?.data || parsed.data?.list || [];
+          $("accountCount").textContent = state.accounts.length;
+          log(`蚁小二账号已刷新：${state.accounts.length} 个`);
+        } catch (error) {
+          log(error);
+        }
+      }
+
+      function filteredNotes() {
+        const q = $("search").value.trim().toLowerCase();
+        if (!q) return state.notes;
+        return state.notes.filter((n) => [n.title, n.content, ...(n.tags || []).map((t) => t.name || t)].join(" ").toLowerCase().includes(q));
+      }
+
+      function render() {
+        document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.mode === state.mode));
+        const rows = state.mode === "knowledge" ? state.knowledge : filteredNotes();
+        $("empty").style.display = rows.length ? "none" : "grid";
+        if (state.mode === "knowledge") {
+          $("tableHead").innerHTML = `<tr><th>知识库</th><th>描述</th><th>笔记</th><th>文件</th><th>更新时间</th></tr>`;
+          $("tableBody").innerHTML = rows.map((k) => `
+            <tr>
+              <td class="title-cell">${escapeHtml(k.name)}</td>
+              <td>${escapeHtml(clip(k.description, 120))}</td>
+              <td>${k.stats?.note_count || 0}</td>
+              <td>${k.stats?.file_count || 0}</td>
+              <td class="muted">${escapeHtml(k.updated_at || "")}</td>
+            </tr>`).join("");
+          return;
+        }
+        $("tableHead").innerHTML = `<tr><th>标题</th><th>内容</th><th>类型</th><th>标签</th><th>时间</th><th>知识库</th></tr>`;
+        $("tableBody").innerHTML = rows.map((n, i) => `
+          <tr data-index="${i}" class="${state.selected?.note_id === n.note_id ? "selected" : ""}">
+            <td class="title-cell">${escapeHtml(n.title || "未命名")}</td>
+            <td>${escapeHtml(clip(n.content, 140))}</td>
+            <td class="muted">${escapeHtml(n.note_type || "")}</td>
+            <td>${tags(n.tags)}</td>
+            <td class="muted">${escapeHtml(n.updated_at || n.edit_time || n.created_at || "")}</td>
+            <td>${(n.topics || []).map((t) => escapeHtml(t.name)).join("、")}</td>
+          </tr>`).join("");
+        document.querySelectorAll("tbody tr[data-index]").forEach((tr) => {
+          tr.addEventListener("click", () => selectNote(rows[Number(tr.dataset.index)]));
+        });
+      }
+
+      function selectNote(note) {
+        state.selected = note;
+        $("selectedTitle").value = note.title || "未命名";
+        $("notePreview").textContent = sourceText(note).slice(0, 700) || "这条笔记没有正文。";
+        $("rewriteOutput").value = "";
+        $("rewriteWechatBtn").disabled = false;
+        $("rewriteXhsBtn").disabled = false;
+        $("rewriteSpeechBtn").disabled = false;
+        log("已选中笔记，可以改写。");
+        render();
+      }
+
+      function sourceText(note) {
+        return String(note?.content || "")
+          .replace(/!\[[^\]]*]\([^)]*\)/g, "")
+          .replace(/\[[^\]]+]\([^)]*\)/g, (m) => m.replace(/\]\([^)]*\)/, "").replace("[", ""))
+          .replace(/#{1,6}\s*/g, "")
+          .replace(/[*_`>~-]/g, "")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\r/g, "")
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
+      }
+
+      function splitSentences(text) {
+        return text
+          .replace(/\s+/g, " ")
+          .split(/(?<=[。！？!?])\s*/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+
+      function corePoints(note, limit = 5) {
+        const sentences = splitSentences(sourceText(note));
+        const fallback = sourceText(note).split(/\n+/).map((s) => s.trim()).filter(Boolean);
+        return (sentences.length ? sentences : fallback).slice(0, limit);
+      }
+
+      function rewrite(type) {
+        if (!state.selected) return;
+        const note = state.selected;
+        const title = note.title || "未命名笔记";
+        const points = corePoints(note, 6);
+        const tagsText = (note.tags || []).map((t) => `#${t.name || t}`).slice(0, 6).join(" ");
+        let output = "";
+
+        if (type === "wechat") {
+          output = [
+            `标题：${title}`,
+            "",
+            "先说结论：这条笔记真正有价值的地方，不是信息本身，而是它能变成一个可复用的判断框架。",
+            "",
+            "一、这件事最值得注意的地方",
+            points[0] || "原始笔记里已经有了核心线索，下一步要把它从记录变成观点。",
+            "",
+            "二、它和普通人/老板有什么关系",
+            points.slice(1, 3).join("\n") || "如果只把它当素材看，很快就忘了；如果把它变成方法，就能进入内容、产品和业务流程。",
+            "",
+            "三、下一步怎么用",
+            points.slice(3, 6).join("\n") || "先提炼一个结论，再补一个案例，最后落到一个可执行动作。",
+            "",
+            "最后说句老板话：知识库不是仓库，能被反复调用、改写、发布、复盘的内容，才是真正的资产。"
+          ].join("\n");
+        }
+
+        if (type === "xhs") {
+          output = [
+            `标题：我从这条笔记里拆出了一个更高级的做法`,
+            "",
+            "正文：",
+            `今天翻到一条笔记：${title}`,
+            "",
+            "它提醒我一件事：真正拉开差距的，不是你收藏了多少资料，而是你能不能把资料变成自己的表达和行动。",
+            "",
+            ...points.slice(0, 5).map((p, i) => `${i + 1}. ${p}`),
+            "",
+            "我的判断：这类内容不要只存起来，最好马上改成一篇文章、一条小红书、一段口播。知识只有进入输出链路，才会变成资产。",
+            "",
+            `话题：${tagsText || "#AI学习 #知识管理 #个人知识库 #内容生产 #效率工具"}`
+          ].join("\n");
+        }
+
+        if (type === "speech") {
+          output = [
+            "口播标题：这条笔记别只收藏，马上把它变成内容资产",
+            "",
+            "开场：",
+            `我今天从自己的 Note 里翻到一条笔记，标题叫《${title}》。`,
+            "我发现很多人做知识库最大的问题，不是没资料，而是资料存进去以后再也没有出来过。",
+            "",
+            "正文：",
+            points.slice(0, 4).map((p, i) => `第 ${i + 1} 点，${p}`).join("\n"),
+            "",
+            "转折：",
+            "所以我现在不把笔记当仓库，而是当内容生产线的原料。",
+            "一条笔记，至少要能改成公众号、小红书和口播文案，这样它才真的被用起来。",
+            "",
+            "结尾：",
+            "如果你也在做个人知识库，记住一句话：收藏只是成本，输出才是资产。"
+          ].join("\n");
+        }
+
+        $("rewriteOutput").value = output;
+        log(`已生成：${type === "wechat" ? "公众号" : type === "xhs" ? "小红书" : "口播文案"}`);
+      }
+
+      $("loadBtn").addEventListener("click", loadAll);
+      $("refreshBtn").addEventListener("click", () => { loadStatus(); loadAll(); loadAccounts(); });
+      $("kbSelect").addEventListener("change", loadNotes);
+      $("search").addEventListener("input", render);
+      $("rewriteWechatBtn").addEventListener("click", () => rewrite("wechat"));
+      $("rewriteXhsBtn").addEventListener("click", () => rewrite("xhs"));
+      $("rewriteSpeechBtn").addEventListener("click", () => rewrite("speech"));
+      document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => { state.mode = tab.dataset.mode; render(); }));
+
+      loadStatus().then((status) => {
+        if (status.getnote.configured) loadAll();
+      }).catch(log);
+      loadAccounts();
+      render();
+    </script>
+  </body>
+</html>
