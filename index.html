@@ -265,6 +265,7 @@
         </div>
         <div class="actions">
           <span class="pill"><i id="getnoteDot" class="dot"></i><span id="getnoteStatus">GetNote 检查中</span></span>
+          <span class="pill"><i id="cliDot" class="dot"></i><span id="cliStatus">Get CLI 检查中</span></span>
           <span class="pill"><i id="yxeDot" class="dot"></i><span id="yxeStatus">蚁小二检查中</span></span>
           <button class="secondary" id="refreshBtn">刷新</button>
           <button id="loadBtn">拉取看表</button>
@@ -377,6 +378,7 @@
       async function loadStatus() {
         const status = await api("/api/status");
         setDot("getnoteDot", "getnoteStatus", status.getnote.configured, status.getnote.configured ? "GetNote 已配置" : "GetNote 未配置", !status.getnote.configured);
+        setDot("cliDot", "cliStatus", status.getnoteCli?.configured, status.getnoteCli?.configured ? "Get CLI 已接入" : "Get CLI 未接入", !status.getnoteCli?.configured);
         setDot("yxeDot", "yxeStatus", status.yixiaoer.configured && status.yixiaoer.scriptExists, status.yixiaoer.configured ? "蚁小二已配置" : "蚁小二未配置", !status.yixiaoer.configured);
         return status;
       }
@@ -402,7 +404,7 @@
           log("正在拉取 GetNote 数据...");
           await loadKnowledge();
           await loadNotes();
-          log("GetNote 数据已拉取。");
+          log("Get CLI 数据已拉取进看板。");
         } catch (error) {
           log(error);
           render();
